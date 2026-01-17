@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小鹿 - 妳的生活記帳夥伴</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #FDFBF7; color: #5D5D5D; font-family: sans-serif; overflow: hidden; }
+        .glass-card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(194, 166, 141, 0.05); }
+        .lulu-bubble { background: white; border-radius: 20px 20px 20px 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .user-bubble { background: #C2A68D; color: white; border-radius: 20px 20px 4px 20px; }
+        .nav-btn { background: #C2A68D; color: white; }
+        .tab-content { display: none; height: calc(100vh - 180px); overflow-y: auto; padding-bottom: 20px; }
+        .active { display: block; }
+    </style>
+</head>
+<body class="p-4">
+    <header class="flex justify-between items-center mb-4 px-2">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-[#E8DCCF] flex items-center justify-center text-white text-xs">❤️</div>
+            <div>
+                <h1 class="text-sm font-bold">小鹿</h1>
+                <p class="text-[10px] opacity-50">今天也會是美好的一天</p>
+            </div>
+        </div>
+        <div class="flex gap-3 opacity-40 text-sm">🕒 🔄</div>
+    </header>
+
+    <div id="dashboard" class="tab-content active space-y-4">
+        <div class="glass-card p-8 text-center mt-2">
+            <p class="text-[10px] opacity-40 mb-1">本週生活餘裕</p>
+            <h2 id="total-val" class="text-4xl font-bold text-[#4A4A4A]">$0</h2>
+            <p class="text-[10px] opacity-30 mt-2 italic">今天也是美好的一天</p>
+        </div>
+
+        <div class="glass-card p-5">
+            <p class="text-[10px] opacity-50 mb-1 font-bold">心情波浪</p>
+            <p id="mood-val" class="text-lg">平緩微風</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <div class="glass-card p-4 relative overflow-hidden">
+                <span class="absolute top-2 right-2 text-[8px] opacity-20 font-bold">ASSET</span>
+                <p class="text-[10px] opacity-50 mb-1">夢想中的房子</p>
+                <p id="asset-house" class="font-bold text-lg">$0</p>
+            </div>
+            <div class="glass-card p-4 relative overflow-hidden">
+                <span class="absolute top-2 right-2 text-[8px] opacity-20 font-bold">FOREST</span>
+                <p class="text-[10px] opacity-50 mb-1">財富小森林</p>
+                <p id="asset-forest" class="font-bold text-lg">$0</p>
+            </div>
+        </div>
+
+        <div id="pocket-area" class="space-y-2">
+            <p class="text-[10px] opacity-40 px-2 font-bold">生活口袋</p>
+            <div id="pocket-list" class="space-y-2">
+                <div class="text-[10px] opacity-30 px-2 italic">尚未設定口袋...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat" class="tab-content space-y-4">
+        <div id="chat-window" class="space-y-4 px-1">
+            <div class="flex justify-start">
+                <div class="lulu-bubble p-4 max-w-[90%] text-sm leading-relaxed">
+                    終於見到妳了！我是小鹿。🌿<br>我已經準備好幫妳管理口袋了！
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="fixed bottom-0 left-0 w-full p-4 bg-[#FDFBF7]/95">
+        <div id="chat-controls" class="hidden mb-3">
+            <div class="flex justify-around mb-2 gap-2">
+                <button onclick="sendMood('開心的一天☀️')" class="bg-white border text-[10px] px-4 py-2 rounded-full shadow-sm">☀️ 開心</button>
+                <button onclick="sendMood('幸運的一天✨')" class="bg-white border text-[10px] px-4 py-2 rounded-full shadow-sm">✨ 幸運</button>
+                <button onclick="sendMood('舒服的一天🌿')" class="bg-white border text-[10px] px-4 py-2 rounded-full shadow-sm">🌿 舒服</button>
+            </div>
+            <div class="flex gap-2">
+                <input id="user-input" type="text" placeholder="跟小鹿聊聊..." class="flex-1 rounded-full px-4 py-3 border-none shadow-inner text-sm bg-white">
+                <button onclick="sendMessage()" class="bg-[#C2A68D] text-white rounded-full px-6 py-2">發送</button>
+            </div>
+        </div>
+        <button id="toggle-btn" onclick="toggleView()" class="w-full py-4 rounded-full nav-btn font-bold text-sm shadow-lg">
+            😊 回對話視窗
+        </button>
+    </footer>
+
+    <script>
+        const API_KEY = 'app-tXkthXJPupIvEHwkPB76805k';
+        const API_URL = 'https://api.dify.ai/v1/chat-messages';
+        let conversationId = "";
+        let isChatView = false;
+
+        function toggleView() {
+            isChatView = !isChatView;
+            document.getElementById('dashboard').classList.toggle('active', !isChatView);
+            document.getElementById('chat').classList.toggle('active', isChatView);
+            document.getElementById('chat-controls').classList.toggle('hidden', !isChatView);
+            document.getElementById('toggle-btn').innerText = isChatView ? "📊 查看儀表板" : "😊 回對話視窗";
+        }
+
+        async function sendMessage(text = null) {
+            const input = document.getElementById('user-input');
+            const message = text || input.value;
+            if (!message) return;
+            appendMessage('user', message);
+            if (!text) input.value = '';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ inputs: {}, query: message, response_mode: "blocking", user: "user-ipad", conversation_id: conversationId })
+                });
+                const data = await response.json();
+                conversationId = data.conversation_id;
+                const jsonMatch = data.answer.match(/\[Dashboard_JSON\]\s*(\{.*\})/s);
+                appendMessage('lulu', data.answer.replace(/\[Dashboard_JSON\].*/s, '').trim());
+                if (jsonMatch) updateUI(JSON.parse(jsonMatch[1]));
+            } catch (e) { appendMessage('lulu', '連線失敗，請檢查 API 設定。'); }
+        }
+
+        function appendMessage(role, text) {
+            const win = document.getElementById('chat-window');
+            const div = document.createElement('div');
+            div.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
+            div.innerHTML = `<div class="${role==='user'?'user-bubble':'lulu-bubble'} p-4 max-w-[85%] text-sm shadow-sm">${text}</div>`;
+            win.appendChild(div);
+            win.parentElement.scrollTop = win.parentElement.scrollHeight;
+        }
+
+        function updateUI(data) {
+            if (data.lifestyle_balances) {
+                document.getElementById('total-val').innerText = `$${data.lifestyle_balances.total_weekly_remaining}`;
+                const list = document.getElementById('pocket-list');
+                list.innerHTML = '';
+                data.lifestyle_balances.categories.forEach(cat => {
+                    list.innerHTML += `<div class="glass-card p-4 flex justify-between items-center">
+                        <span class="text-sm font-medium">${cat.name}</span>
+                        <span class="font-bold text-[#C2A68D]">$${cat.remaining}</span>
+                    </div>`;
+                });
+            }
+            if (data.mood_analytics) document.getElementById('mood-val').innerText = data.mood_analytics.mood_wave;
+            if (data.assets_tracking) {
+                document.getElementById('asset-house').innerText = `$${data.assets_tracking.dream_home.total_saved}`;
+                document.getElementById('asset-forest').innerText = `$${data.assets_tracking.wealth_forest.total_saved}`;
+            }
+        }
+        function sendMood(m) { sendMessage(m); }
+    </script>
+</body>
+</html>
