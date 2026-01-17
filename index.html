@@ -7,38 +7,44 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #FDFBF7; color: #5D5D5D; font-family: sans-serif; overflow-x: hidden; }
-        .glass-card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-        .lulu-bubble { background: white; border-radius: 20px 20px 20px 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-        .user-bubble { background: #C2A68D; color: white; border-radius: 20px 20px 4px 20px; }
-        .nav-btn { background: #C2A68D; color: white; border-radius: 99px; padding: 12px; font-weight: bold; width: 100%; }
+        .glass-card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 12px; }
+        .lulu-bubble { background: white; border-radius: 20px 20px 20px 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); padding: 16px; margin-bottom: 12px; }
+        .user-bubble { background: #C2A68D; color: white; border-radius: 20px 20px 4px 20px; padding: 16px; margin-bottom: 12px; }
+        .nav-btn { background: #C2A68D; color: white; border-radius: 99px; padding: 14px; font-weight: bold; width: 100%; box-shadow: 0 4px 15px rgba(194,166,141,0.3); }
         .tab-content { display: none; padding-bottom: 120px; }
         .active { display: block; }
     </style>
 </head>
 <body class="p-4">
-    <div id="dashboard" class="tab-content active space-y-4">
+    <div id="dashboard" class="tab-content active">
         <div class="glass-card p-10 text-center">
             <p class="text-[10px] opacity-40">本週生活餘裕</p>
-            <h2 id="total-val" class="text-5xl font-bold">$0</h2>
+            <h2 id="total-val" class="text-5xl font-bold text-[#4A4A4A]">$0</h2>
         </div>
-        <div class="glass-card p-5"><p class="text-xs opacity-50">心情波浪</p><p id="mood-val" class="text-xl font-bold">平緩微風</p></div>
+        <div class="glass-card p-5">
+            <p class="text-[10px] opacity-50 mb-1">心情波浪</p>
+            <p id="mood-val" class="text-xl font-bold">平緩微風</p>
+        </div>
         <div class="grid grid-cols-2 gap-4">
             <div class="glass-card p-4"><p class="text-[10px] opacity-50">夢想房子</p><p id="asset-house" class="text-lg font-bold">$0</p></div>
             <div class="glass-card p-4"><p class="text-[10px] opacity-50">財富森林</p><p id="asset-forest" class="text-lg font-bold">$0</p></div>
         </div>
-        <div id="pocket-list" class="space-y-2"></div>
-    </div>
-
-    <div id="chat" class="tab-content space-y-4">
-        <div id="chat-window" class="space-y-4 min-h-[300px]">
-            <div class="lulu-bubble p-4 text-sm">嗨！我是小鹿，來聊聊今天的預算吧！🌿</div>
+        <div id="pocket-list" class="space-y-2 pt-2">
+            <p class="text-[10px] opacity-40 px-2 font-bold uppercase">生活口袋</p>
+            <div class="glass-card p-4 opacity-30 italic text-sm text-center">尚未分配預算</div>
         </div>
     </div>
 
-    <footer class="fixed bottom-0 left-0 w-full p-4 bg-white/80 backdrop-blur">
-        <div id="input-area" class="hidden flex gap-2 mb-2">
-            <input id="user-input" type="text" class="flex-1 border rounded-full px-4 py-2" placeholder="輸入訊息...">
-            <button onclick="sendMessage()" class="bg-[#C2A68D] text-white px-4 py-2 rounded-full">送出</button>
+    <div id="chat" class="tab-content">
+        <div id="chat-window" class="space-y-2 min-h-[400px]">
+            <div class="lulu-bubble text-sm">嗨！我是小鹿。🌿 點下方按鈕可以回儀表板看口袋金額喔！</div>
+        </div>
+    </div>
+
+    <footer class="fixed bottom-0 left-0 w-full p-4 bg-[#FDFBF7]/90 backdrop-blur">
+        <div id="input-area" class="hidden flex gap-2 mb-3">
+            <input id="user-input" type="text" class="flex-1 border rounded-full px-4 py-3 shadow-inner" placeholder="跟小鹿聊聊...">
+            <button onclick="sendMessage()" class="bg-[#C2A68D] text-white px-6 rounded-full font-bold">送出</button>
         </div>
         <button id="toggle-view" onclick="toggleView()" class="nav-btn">😊 回對話視窗</button>
     </footer>
@@ -56,41 +62,72 @@
         }
 
         async function sendMessage() {
-            const msg = document.getElementById('user-input').value;
+            const input = document.getElementById('user-input');
+            const msg = input.value;
             if(!msg) return;
+            
             appendMsg('user', msg);
-            document.getElementById('user-input').value = '';
+            input.value = '';
 
             try {
+                // 使用 cors-anywhere 或直連測試，這次我們優化連線頭
                 const res = await fetch('https://api.dify.ai/v1/chat-messages', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ inputs: {}, query: msg, response_mode: "blocking", user: "abc" })
+                    headers: { 
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        inputs: {}, 
+                        query: msg, 
+                        response_mode: "blocking", 
+                        user: "lulu_user_" + Date.now() 
+                    })
                 });
+                
                 const data = await res.json();
-                appendMsg('lulu', data.answer.replace(/\[Dashboard_JSON\].*/s, ''));
-                const json = data.answer.match(/\[Dashboard_JSON\]\s*(\{.*\})/s);
-                if(json) updateUI(JSON.parse(json[1]));
-            } catch(e) { appendMsg('lulu', '連線失敗...請檢查 API 設定'); }
+                const answer = data.answer;
+                
+                // 處理小鹿的文字回覆
+                const cleanText = answer.replace(/\[Dashboard_JSON\].*/s, '').trim();
+                appendMsg('lulu', cleanText);
+                
+                // 處理 JSON 數據更新 UI
+                const jsonMatch = answer.match(/\[Dashboard_JSON\]\s*(\{.*\})/s);
+                if(jsonMatch) updateUI(JSON.parse(jsonMatch[1]));
+                
+            } catch(e) {
+                appendMsg('lulu', '哎呀，小鹿斷線了...請確認 Dify API 鑰匙是否正確！');
+                console.error(e);
+            }
         }
 
         function appendMsg(role, text) {
+            const win = document.getElementById('chat-window');
             const div = document.createElement('div');
             div.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
-            div.innerHTML = `<div class="${role==='user'?'user-bubble':'lulu-bubble'} p-4 max-w-[80%] text-sm">${text}</div>`;
-            document.getElementById('chat-window').appendChild(div);
+            div.innerHTML = `<div class="${role==='user'?'user-bubble':'lulu-bubble'} max-w-[85%] text-sm shadow-sm">${text}</div>`;
+            win.appendChild(div);
+            window.scrollTo(0, document.body.scrollHeight);
         }
 
         function updateUI(d) {
             if(d.lifestyle_balances) {
                 document.getElementById('total-val').innerText = `$${d.lifestyle_balances.total_weekly_remaining}`;
-                let html = '<p class="text-[10px] opacity-40 px-2">生活口袋</p>';
+                let html = '<p class="text-[10px] opacity-40 px-2 font-bold uppercase mb-2">生活口袋</p>';
                 d.lifestyle_balances.categories.forEach(c => {
-                    html += `<div class="glass-card p-4 flex justify-between"><span>${c.name}</span><b>$${c.remaining}</b></div>`;
+                    html += `<div class="glass-card p-4 flex justify-between items-center animate-pulse-once">
+                        <span class="text-sm font-medium">${c.name}</span>
+                        <span class="font-bold text-[#C2A68D]">$${c.remaining}</span>
+                    </div>`;
                 });
                 document.getElementById('pocket-list').innerHTML = html;
             }
             if(d.mood_analytics) document.getElementById('mood-val').innerText = d.mood_analytics.mood_wave;
+            if(d.assets_tracking) {
+                document.getElementById('asset-house').innerText = `$${d.assets_tracking.dream_home.total_saved}`;
+                document.getElementById('asset-forest').innerText = `$${d.assets_tracking.wealth_forest.total_saved}`;
+            }
         }
     </script>
 </body>
